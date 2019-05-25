@@ -1,0 +1,56 @@
+https://pypi.org/project/PyHive/
+==========
+pip install pyhive[hive] for the Hive interface and
+pip install pyhive[presto] for the Presto interface.
+======================
+DB-API
+======================
+from pyhive import hive
+ 
+cursor = hive.connect('localhost').cursor()
+cursor.execute('SELECT * FROM airports LIMIT 50')
+
+
+headers = [x.split(".")[1] for x in description]
+
+df= pd.DataFrame(cursor.fetchall(), columns = headers)
+======================
+DB-API (asynchronous)
+======================
+from pyhive import hive
+from TCLIService.ttypes import TOperationState
+cursor = hive.connect('localhost').cursor()
+cursor.execute('SELECT * FROM my_awesome_data LIMIT 10', async=True)
+
+status = cursor.poll().operationState
+while status in (TOperationState.INITIALIZED_STATE, TOperationState.RUNNING_STATE):
+    logs = cursor.fetch_logs()
+    for message in logs:
+        print message
+
+    # If needed, an asynchronous query can be cancelled at any time with:
+    # cursor.cancel()
+
+    status = cursor.poll().operationState
+
+print cursor.fetchall()
+========================================================================================
+Passing session configuration
+
+hive.connect('localhost', configuration={'hive.exec.reducers.max': '123'})
+================================================
+================================================
+!connect jdbc:hive2://hadoop-master:10000/ hadoop hadoop@123 org.apache.hive.jdbc.HiveDriver
+!connect jdbc:hive2://hadoop-master:10000/ hadoop 123456 org.apache.hive.jdbc.HiveDriver
+===============
+from pyhive import hive
+import pandas as pd
+
+conn = hive.Connection(host="hadoop-master", port=10000, username="hadoop")
+
+# Read Hive table and Create pandas dataframe
+df = pd.read_sql("SELECT * FROM airports limit 10", conn)
+print(df.head())
+
+only_gold = df.where(df['airports.country'] == 'US')
+only_gold.head()
