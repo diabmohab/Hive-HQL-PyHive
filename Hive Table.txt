@@ -1,0 +1,333 @@
+analyze table PCAS_TRANS compute statistics;
+analyze table PCAS_TRANS compute statistics for columns pan,action_code,capture_date;
+
+analyze table contactcalldetail_new compute statistics;
+analyze table contactcalldetail_new compute statistics for columns;
+
+set hive.exec.dynamic.partition=true;  
+set hive.exec.dynamic.partition.mode=nonstrict; 
+set hive.exec.max.dynamic.partitions=100000;
+set hive.exec.max.dynamic.partitions.pernode=10000;
+
+insert overwrite table PCAS_Shadow_TRANS_Partition partition(capture_date) select * from cms_all_trans;
+
+analyze table PCAS_CMS_TRANS compute statistics for columns pan,action_code,capture_date;
+
+CREATE TABLE PCAS_TRANS (processing_date timestamp,source_station string,action_code int,local_date_time timestamp,transaction_amount double,transaction_currency int,fees_amount double,pan string,account_type int,to_account_type int,retreival_reference_number string,acquirer_id double,terminal_id string,terminal_location string,capture_date timestamp,destination_station string,response_code string,aut_number string,receiving_institution_id double,settlement_amount double,settlement_currency int,settlement_conversion_rate double,settlement_date timestamp,remaining_balance double,ledger_balance double,reversed int,charging_profile int,related_card string,from_account string,to_account string,transaction_sequence string,related_transaction string,transaction_timestamp timestamp,mobile string,related_mobile string,processing_start timestamp,processing_end timestamp) clustered by (capture_date) into 256 buckets stored as orc TBLPROPERTIES ("transactional"="true","orc.compress"="ZLIB", "orc.stripe.size"="268435456", "orc.row.index.stride"="10000","orc.create.index"="true");
+CREATE TABLE PCAS_ALL_TRANS (processing_date timestamp,source_station string,action_code int,local_date_time timestamp,transaction_amount double,transaction_currency int,fees_amount double,pan string,account_type int,to_account_type int,retreival_reference_number string,acquirer_id double,terminal_id string,terminal_location string,capture_date timestamp,destination_station string,response_code string,aut_number string,receiving_institution_id double,settlement_amount double,settlement_currency int,settlement_conversion_rate double,settlement_date timestamp,remaining_balance double,ledger_balance double,reversed int,charging_profile int,related_card string,from_account string,to_account string,transaction_sequence string,related_transaction string,transaction_timestamp timestamp,mobile string,related_mobile string,processing_start timestamp,processing_end timestamp) clustered by (PAN) into 128 buckets stored as orc TBLPROPERTIES ("orc.compress"="ZLIB", "orc.stripe.size"="33554432", "orc.row.index.stride"="10000","orc.create.index"="true","orc.bloom.filter.columns"="PAN,action_code,capture_date");
+
+CREATE TABLE PCAS_Shadow_TRANS_Partition (processing_date timestamp,source_station string,action_code int,local_date_time timestamp,transaction_amount double,transaction_currency int,fees_amount double,pan string,account_type int,to_account_type int,retreival_reference_number string,acquirer_id double,terminal_id string,terminal_location string,destination_station string,response_code string,aut_number string,receiving_institution_id double,settlement_amount double,settlement_currency int,settlement_conversion_rate double,settlement_date timestamp,remaining_balance double,ledger_balance double,reversed int,charging_profile int,related_card string,from_account string,to_account string,transaction_sequence string,related_transaction string,transaction_timestamp timestamp,mobile string,related_mobile string,processing_start timestamp,processing_end timestamp) PARTITIONED BY(capture_date timestamp) stored as orc TBLPROPERTIES ("orc.compress"="SNAPPY","orc.compress.size"="262144", "orc.stripe.size"="134217728", "orc.row.index.stride"="100000","orc.create.index"="true","orc.bloom.filter.columns"="PAN,action_code,capture_date");
+
+
+TAJO --ORC File
+CREATE TABLE PCAS_Shadow_TRANS_N (processing_date timestamp,source_station text,action_code int,local_date_time timestamp,transaction_amount double,transaction_currency int,fees_amount double,pan text,account_type int,to_account_type int,retreival_reference_number text,acquirer_id double,terminal_id text,terminal_location text,capture_date timestamp,destination_station text,response_code text,aut_number text,receiving_institution_id double,settlement_amount double,settlement_currency int,settlement_conversion_rate double,settlement_date timestamp,remaining_balance double,ledger_balance double,reversed int,charging_profile int,related_card text,from_account text,to_account text,transaction_sequence text,related_transaction text,transaction_timestamp timestamp,mobile text,related_mobile text,processing_start timestamp,processing_end timestamp) USING ORC
+with ('orc.compression.kind'='SNAPPY','orc.buffer.size'='262144','orc.stripe.size'='268435456','orc.create.index'='true','orc.rowindex.stride'='7000','orc.bloom.filter.columns'='PAN,capture_date')
+as select processing_date,source_station,action_code,local_date_time,transaction_amount,transaction_currency,fees_amount,pan,account_type,to_account_type,retreival_reference_number,acquirer_id,terminal_id,terminal_location,capture_date,destination_station,response_code,aut_number,receiving_institution_id,settlement_amount,settlement_currency,settlement_conversion_rate,settlement_date,remaining_balance,ledger_balance,reversed,charging_profile,related_card,from_account,to_account,transaction_sequence,related_transaction,transaction_timestamp,mobile,related_mobile,processing_start,processing_end from cms_all_trans;
+
+"orc.compress"="ZLIB",
+"orc.compress.size"="262144",
+"orc.create.index"="true",
+"orc.stripe.size"="268435456",
+"orc.row.index.stride"="3000")
+as 
+
+
+insert into pcas_shadow_trans_partition select * from cms_all_trans;
+
+create external table cms_trans_acid_ext
+(processing_date STRING,
+source_station STRING,
+action_code STRING,
+local_date_time STRING,
+transaction_amount STRING,
+transaction_currency STRING,
+fees_amount STRING,
+pan STRING,
+account_type STRING,
+to_account_type STRING,
+retreival_reference_number STRING,
+acquirer_id STRING,
+terminal_id STRING,
+terminal_location STRING,
+capture_date STRING,
+destination_station STRING,
+response_code STRING,
+aut_number STRING,
+receiving_institution_id STRING,
+settlement_amount STRING,
+settlement_currency STRING,
+settlement_conversion_rate STRING,
+settlement_date STRING,
+remaining_balance STRING,
+ledger_balance STRING,
+reversed STRING,
+charging_profile STRING,
+Related_Card STRING,
+from_account STRING,
+to_account STRING,
+transaction_sequence STRING,
+related_transaction STRING,
+transaction_timestamp STRING,
+mobile STRING,
+related_mobile STRING,
+processing_start STRING,
+processing_end STRING)
+clustered by (capture_date) into 3 buckets
+stored as orc 
+TBLPROPERTIES ("transactional"="true","orc.compress"="ZLIB", "orc.stripe.size"="268435456", "orc.row.index.stride"="10000","orc.create.index"="true");
+
+create external table  Txn_Test (
+processing_date STRING,
+source_station STRING,
+action_code STRING,
+local_date_time STRING,
+transaction_amount STRING,
+transaction_currency STRING,
+fees_amount STRING,
+pan STRING,
+account_type STRING,
+to_account_type STRING,
+retreival_reference_number STRING,
+acquirer_id STRING,
+terminal_id STRING,
+terminal_location STRING,
+capture_date STRING,
+destination_station STRING,
+response_code STRING,
+aut_number STRING,
+receiving_institution_id STRING,
+settlement_amount STRING,
+settlement_currency STRING,
+settlement_conversion_rate STRING,
+settlement_date STRING,
+remaining_balance STRING,
+ledger_balance STRING,
+reversed STRING,
+charging_profile STRING,
+Related_Card STRING,
+from_account STRING,
+to_account STRING,
+transaction_sequence STRING,
+related_transaction STRING,
+transaction_timestamp STRING,
+mobile STRING,
+related_mobile STRING,
+processing_start STRING,
+processing_end STRING)
+ROW FORMAT DELIMITED FIELDS TERMINATED BY '\u0001'
+STORED AS TEXTFILE
+LOCATION 'hdfs://hadoop-master:8020/user/hadoop/cmstxn';
+
+CREATE TABLE IF NOT EXISTS Transactions_S(
+processing_date STRING,
+source_station STRING,
+action_code STRING,
+local_date_time STRING,
+transaction_amount STRING,
+transaction_currency STRING,
+fees_amount STRING,
+pan STRING,
+account_type STRING,
+to_account_type STRING,
+retreival_reference_number STRING,
+acquirer_id STRING,
+terminal_id STRING,
+terminal_location STRING,
+capture_date STRING,
+destination_station STRING,
+response_code STRING,
+aut_number STRING,
+receiving_institution_id STRING,
+settlement_amount STRING,
+settlement_currency STRING,
+settlement_conversion_rate STRING,
+settlement_date STRING,
+remaining_balance STRING,
+ledger_balance STRING,
+reversed STRING,
+charging_profile STRING,
+Related_Card STRING,
+from_account STRING,
+to_account STRING,
+transaction_sequence STRING,
+related_transaction STRING,
+transaction_timestamp STRING,
+mobile STRING,
+related_mobile STRING,
+processing_start STRING,
+processing_end STRING
+)
+ROW FORMAT DELIMITED
+FIELDS TERMINATED BY ','
+STORED AS ORC TBLPROPERTIES ("orc.compress"="SNAPPY");
+
+drop table Txn_Test2;
+create external table  accounts (
+processing_date varchar,
+source_station varchar,
+action_code varchar,
+local_date_time varchar,
+transaction_amount varchar,
+transaction_currency varchar,
+fees_amount varchar,
+pan varchar,
+account_type varchar,
+to_account_type varchar,
+retreival_reference_number varchar,
+acquirer_id varchar,
+terminal_id varchar,
+terminal_location varchar,
+capture_date varchar,
+destination_station varchar,
+response_code varchar,
+aut_number varchar,
+receiving_institution_id varchar,
+settlement_amount varchar,
+settlement_currency varchar,
+settlement_conversion_rate varchar,
+settlement_date varchar,
+remaining_balance varchar,
+ledger_balance varchar,
+reversed varchar,
+charging_profile varchar,
+Related_Card varchar,
+from_account varchar,
+to_account varchar,
+transaction_sequence varchar,
+related_transaction varchar,
+transaction_timestamp varchar,
+mobile varchar,
+related_mobile varchar,
+processing_start varchar,
+processing_end varchar)
+USING CSV WITH('csvfile.delimiter'='\u0001','text.delimiter'='\u0001','text.null'='\\N',
+                 'csvfile.null'='\\N','csvfile.serde'='org.my.storage.CustomSerializerDeserializer')
+location 'hdfs://hadoop-master:8020/user/hadoop/accounts';
+
+CREATE INDEX  IDX_cms_Trans_pan ON cms_trans(pan);
+CREATE INDEX  IDX_CMS_trans_acid_PAN ON cms_trans_acid(pan);
+
+ update cms_trans_acid set pan=trim(pan);
+
+drop table accounts;
+
+select * from accounts limit 10;
+
+
+CREATE TABLE CMS_ALL_TRANS_Test
+clustered by (capture_date) into 256 buckets
+USING ORC WITH ('orc.compression.kind'='ZLIB') 
+AS SELECT * FROM hdfs_all_trans2;
+
+
+create external table  accounts (
+account_number varchar,
+status varchar,
+balance varchar,
+max_balance varchar,
+overdraft varchar,
+primary_account_number varchar)
+USING text WITH('text.delimiter'='\u0001','text.null'='\\N')
+location 'hdfs://hadoop-master:8020/user/hadoop/accounts/part-m-00000';
+
+create external table  accounts (
+account_number varchar,
+status varchar,
+balance varchar,
+max_balance varchar,
+overdraft varchar,
+primary_account_number varchar)
+USING text WITH('text.delimiter'='\u0001','text.null'='\\N')
+location 'hdfs://hadoop-master:8020/user/hadoop/accounts/part-m-00000';
+
+txn_test
+
+transactions
+transactions_s
+
+
+INSERT OVERWRITE INTO transactions SELECT * FROM txn_test;
+INSERT OVERWRITE INTO transactions_s SELECT * FROM txn_test;
+
+
+CREATE TABLE CMS_TRANS	USING ORC WITH (
+"orc.compress"="ZLIB")
+AS SELECT * FROM txn_test;
+
+WITH (
+"orc.compress"="ZLIB",
+"orc.compress.size"="262144",
+"orc.create.index"="true",
+"orc.stripe.size"="268435456",
+"orc.row.index.stride"="3000")
+
+
+CREATE TABLE CMS_TRANS_S USING ORC WITH ('orc.compression.kind'='snappy') AS SELECT * FROM txn_test;
+
+
+CREATE TABLE CMS_Trans_TBL (
+processing_date varchar,
+source_station varchar,
+action_code varchar,
+local_date_time varchar,
+transaction_amount varchar,
+transaction_currency varchar,
+fees_amount varchar,
+pan varchar,
+account_type varchar,
+to_account_type varchar,
+retreival_reference_number varchar,
+acquirer_id varchar,
+terminal_id varchar,
+terminal_location varchar,
+capture_date varchar,
+destination_station varchar,
+response_code varchar,
+aut_number varchar,
+receiving_institution_id varchar,
+settlement_amount varchar,
+settlement_currency varchar,
+settlement_conversion_rate varchar,
+settlement_date varchar,
+remaining_balance varchar,
+ledger_balance varchar,
+reversed varchar,
+charging_profile varchar,
+Related_Card varchar,
+from_account varchar,
+to_account varchar,
+transaction_sequence varchar,
+related_transaction varchar,
+transaction_timestamp varchar,
+mobile varchar,
+related_mobile varchar,
+processing_start varchar,
+processing_end varchar)
+USING ORC; 
+
+
+CREATE TABLE CMS_TRANS_ACID
+USING ORC WITH ('orc.compression.kind'='ZLIB','transactional'='true') 
+AS SELECT * FROM CMS_TRANS;
+
+
+CREATE INDEX IDX_cms_Trans_pan ON table cms_trans(pan) AS 'COMPACT' WITH DEFERRED REBUILD STORED AS ORC;
+ALTER INDEX IDX_cms_Trans_pan ON cms_trans REBUILD;
+SHOW FORMATTED INDEX ON cms_trans;
+
+set hive.support.concurrency=true;
+set hive.enforce.bucketing=true;
+set hive.exec.dynamic.partition.mode=nonstrict;
+set hive.txn.manager=org.apache.hadoop.hive.ql.lockmgr.DbTxnManager;
+set hive.compactor.initiator.on=true;
+set hive.compactor.worker.threads=2;
+
+
+--Hive with golden gate
+gg.handler.hdfs.format=delimitedtext
+gg.handler.hdfs.format.insertOpKey=I
+gg.handler.hdfs.format.updateOpKey=U
+gg.handler.hdfs.format.deleteOpKey=D
+gg.handler.hdfs.format.truncateOpKey=T
+gg.handler.hdfs.format.encoding=UTF-8
+gg.handler.hdfs.format.pkUpdateHandling=delete-insert

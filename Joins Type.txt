@@ -1,0 +1,33 @@
+Map Join
+
+	set hive.auto.convert.join=true;
+	set hive.auto.convert.join.noconditionaltask=true;
+	set hive.auto.convert.join.noconditionaltask.size=20971520
+	set hive.auto.convert.join.use.nonstaged=true;
+	set hive.mapjoin.smalltable.filesize = 30000000;
+
+Limitations of Map Join in Hive
+	never convert Full outer joins to map-side joins
+	it is possible to convert a left-outer/right-outer join to a map-side join in the Hive
+========
+explain select a.* from passwords a,passwords3 b where a.col0=b.col0;
+========
+set hive.ignore.mapjoin.hint=false;
+##############################################
+Bucket Map Join
+	set hive.enforce.bucketing = true;
+	set hive.optimize.bucketmapjoin = true
+	
+explain select /*+ MAPJOIN(b2) */ b1.* from b1,b2 where b1.col0=b2.col0;
+##############################################
+Skew Join in Hive
+	set	hive.optimize.skewjoin=true;
+	set hive.skewjoin.key=100000;
+##############################################
+Sort Merge Bucket Join
+
+	set hive.enforce.bucketing = true;
+	set hive.auto.convert.sortmerge.join=true;
+	set hive.optimize.bucketmapjoin = true;
+	set hive.optimize.bucketmapjoin.sortedmerge = true;
+	set hive.auto.convert.sortmerge.join.noconditionaltask=true;
